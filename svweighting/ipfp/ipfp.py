@@ -1,6 +1,4 @@
 # Iterative proportional fitting
-from __future__ import division, absolute_import
-
 import copy
 import numpy as np
 

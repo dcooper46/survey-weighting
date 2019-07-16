@@ -1,5 +1,5 @@
 """ utility functions and classes for weighting """
-from __future__ import division
+from itertools import product
 
 import numpy as np
 import pandas as pd
@@ -8,7 +8,7 @@ import pandas as pd
 AXIS_LETTERS = 'ijklmnopqr'
 
 
-class Marginal(object):
+class Marginal():
     """
     container for a marginal (raw or calculated)
     """
@@ -98,3 +98,30 @@ def safe_divide(arr1, arr2):
     safely divide arrays by checking for 0
     """
     return np.divide(arr1, arr2, out=np.zeros_like(arr1), where=arr2 != 0)
+
+
+def calculate_marginals2d(expected_counts, labels, label_maps):
+    """
+    calculate expected marginal cell proportions
+        - assume no greater than 2dim cross tabs
+    keys of dict should tuples
+    """
+    marginals = []
+    marginal_dims = []
+    for label, value_counts in expected_counts.items():
+        if not isinstance(label, (tuple, list)):
+            label = tuple([label])
+        if len(label) == 1:
+            marginals.append([value_counts[l] for l in label_maps[label[0]]])
+            marginal_dims.append([labels.index(label[0])])
+        else:
+            shape = tuple(len(label_maps[l]) for l in label)
+            sub_marginal = np.zeros(shape)
+            ids = list(product(*[enumerate(label_maps[j]) for j in label]))
+            for d1, d2 in ids:
+                i, label_i = d1
+                j, label_j = d2
+                sub_marginal[i][j] = value_counts[label_i][label_j]
+            marginals.append(sub_marginal.tolist())
+            marginal_dims.append([labels.index(d) for d in label])
+    return marginals, marginal_dims
